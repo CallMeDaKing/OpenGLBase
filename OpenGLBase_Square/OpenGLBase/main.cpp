@@ -119,8 +119,7 @@ void setupRC() {
     // 初始化固定着色器  采用固管线渲染，后面会学着用OpenGL着色语言来写着色器
     shaderManager.InitializeStockShaders();
 
-    //指定顶点
-
+    //指定顶点 图元链接方式
     triangleBatch.Begin(GL_TRIANGLE_FAN, 4);
     
     // 把顶点copy 到 顶点着色器
