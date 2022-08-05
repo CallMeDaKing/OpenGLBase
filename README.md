@@ -68,3 +68,6 @@ maskToBounds 和 clipsToBounds 一定会触发离屏渲染吗？
 2.贝塞尔绘制圆角
 3.使用UI切好的圆角图片
 4.在图层上添加一个圆角图层
+
+
+出现屏幕撕裂 和 掉帧的根本原因  https://segmentfault.com/a/1190000023213674
