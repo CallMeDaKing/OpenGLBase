@@ -158,7 +158,6 @@ void setupRC() {
     //设置清屏颜色（背景颜色 灰色）
     glClearColor(0.7f, 0.7f, 0.7f, 1.0f );
     shaderManager.InitializeStockShaders()
-    glEnable(
     
     
 
