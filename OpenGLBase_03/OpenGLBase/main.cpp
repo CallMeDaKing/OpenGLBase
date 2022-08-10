@@ -159,7 +159,7 @@ void DrawWireFramedBatch(GLBatch* pBatch) {
     glDisable(GL_POLYGON_OFFSET_LINE);
     glLineWidth(1.0f);
     glDisable(GL_BLEND);
-    glDisable(GL_LINE_SMOOTH);    
+    glDisable(GL_LINE_SMOOTH);
 }
 
 
@@ -184,6 +184,10 @@ void RenderScene(void) {
         glDisable(GL_DEPTH_TEST);
     }
     
+    glEnable(GL_SCISSOR_TEST);
+    glClearColor(0.0f, 0.0f, 1.0f, 0.0f);
+    glScissor(100, 100, 600, 400);
+    
     modelViewMatrix.PushMatrix(objectFrame);
     
     GLfloat vRed[] = {1.0f, 0.0f, 0.0f, 1.0f};
@@ -200,7 +204,7 @@ void RenderScene(void) {
     glutSwapBuffers();
 }
 
-// 两个作用， 1.设置视图大小 2.设置投影矩阵
+// 两个作用， 1.设置视图大小 2.设置投影矩阵 3.初始化渲染管线
 void changeSize(int w,int h) {
     
     glViewport(0, 0, w, h);
