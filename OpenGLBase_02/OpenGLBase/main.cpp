@@ -25,7 +25,11 @@ GLShaderManager shaderManager;
 
 //简单的批次容器，是GLTools的一个简单的容器类。  三角形类批次类  OpenGLES 不适用该类  OpenGL代码仅做了解，真正做开发 是OpenGL ES
 
-GLBatch triangleBatch;
+GLBatch squareBatch;
+GLBatch greenBatch;
+GLBatch redBatch;
+GLBatch blueBatch;
+GLBatch blackBatch;
 
 /*
 
@@ -54,53 +58,37 @@ void changeSize(int w,int h) {
 // 当屏幕进行刷新的时候调用多次，系统在刷新的时候主动调用 比如60帧 相当于每秒刷新60次， 调用60 次
 void RenderScene(void) {
 
-    //MARK: 普通实现方法
-//    //1.清除一个或者一组特定的缓存区  该方法会作为屏幕刷新事件多次触发，所以每次绘制前需要清空下该缓存区
-//    /*
-//        OpenGL 中有多重缓存去 颜色缓存区GL_COLOR_BUFFER_BIT、 深度缓存区GL_DEPTH_BUFFER_BIT、 模型缓存区 GL_STENCIL_BUFFER_BIT
-//        缓存区： 是用来存储图像信息的存储空间， RGBA分量通常一起作为颜色缓存区或者像素缓存区引用
-//
-//     */
-//    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-//
-//    //2.设置一组浮点数来表示红色  配置颜色
-//
-//    GLfloat vRed[] = {1.0,0.0,0.0,1.0f};
-//
-//    //传递到存储着色器，即GLT_SHADER_IDENTITY 固定单元着色器着色器，这个着色器只是使用指定颜色以默认笛卡尔坐标第在屏幕上渲染几何图形
-//    shaderManager.UseStockShader(GLT_SHADER_IDENTITY,vRed);
-//
-//    //提交着色器
-//    triangleBatch.Draw();
-//
-//    // 将后台缓冲区进行渲染，然后结束后交换给前台  （双缓存区， 将绘制好的buffer 显示）
-//    glutSwapBuffers();
-    
-    
-    //MARK: 方法2  使用矩阵实现
-    // 清除上一次缓存
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     
-    GLfloat vRed[] = {1.0f,0.0f,0.0f,0.0f};
-
-    // 声明 平移旋转 和最终矩阵
-    M3DMatrix44f mFinalTransform, mTransformMatrix, mRotationMatrix;
-    // 平移
-    m3dTranslationMatrix44(mTransformMatrix, xPos, yPos, 0.0f);
+    // 开启混合  混合的只是图层
+    glEnable(GL_BLEND);
+    // 开启组合函数，计算混合银子   混合的是颜色
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
-    // 每次平移时旋转 5°
-    static float yRot = 0.0f;
-    yRot += 5.0f;
-    m3dRotationMatrix44(mRotationMatrix, m3dDegToRad(yRot), 0.0f, 0.0f, 1.0f);
+    // 定义四种颜色
+    GLfloat vRed[] = {1.0f, 0.0f, 0.0f, 1.0f};
+    GLfloat vRed1[] = { 1.0f, 0.0f, 0.0f, 0.5f };
+    GLfloat vGreen[] = { 0.0f, 1.0f, 0.0f, 0.5f };
+    GLfloat vBlue[] = { 0.0f, 0.0f, 1.0f, 0.5f };
+    GLfloat vBlack[] = { 0.0f, 0.0f, 0.0f, 0.5f };
     
-    // 将平移和旋转的矩阵合并到 mFinalTransform
-    m3dMatrixMultiply44(mFinalTransform, mTransformMatrix, mRotationMatrix);
+    shaderManager.UseStockShader(GLT_SHADER_IDENTITY, vRed);
+    squareBatch.Draw();
     
-    // 将矩阵结果给 平面着色器 中绘制
-    shaderManager.UseStockShader(GLT_SHADER_FLAT, mFinalTransform, vRed);
+    shaderManager.UseStockShader(GLT_SHADER_IDENTITY, vGreen);
+    greenBatch.Draw();
     
-    // 提交绘制
-    triangleBatch.Draw();
+    shaderManager.UseStockShader(GLT_SHADER_IDENTITY, vRed1);
+    redBatch.Draw();
+    
+    shaderManager.UseStockShader(GLT_SHADER_IDENTITY, vBlue);
+    blueBatch.Draw();
+    
+    shaderManager.UseStockShader(GLT_SHADER_IDENTITY, vBlack);
+    blackBatch.Draw();
+    
+    // 渲染结束关闭混合
+    glDisable(GL_BLEND);
     
     glutSwapBuffers();
 
@@ -120,11 +108,46 @@ void setupRC() {
     shaderManager.InitializeStockShaders();
 
     //指定顶点 图元链接方式
-    triangleBatch.Begin(GL_TRIANGLE_FAN, 4);
+    squareBatch.Begin(GL_TRIANGLE_FAN, 4);
+    squareBatch.CopyVertexData3f(vVerts);
+    squareBatch.End();
     
-    // 把顶点copy 到 顶点着色器
-    triangleBatch.CopyVertexData3f(vVerts);
-    triangleBatch.End();
+    // 绘制四个矩形
+    GLfloat vBlock[] = { 0.25f, 0.25f, 0.0f,
+        0.75f, 0.25f, 0.0f,
+        0.75f, 0.75f, 0.0f,
+        0.25f, 0.75f, 0.0f};
+    
+    greenBatch.Begin(GL_TRIANGLE_FAN, 4);
+    greenBatch.CopyVertexData3f(vBlock);
+    greenBatch.End();
+    
+    GLfloat vBlock2[] = { -0.75f, 0.25f, 0.0f,
+        -0.25f, 0.25f, 0.0f,
+        -0.25f, 0.75f, 0.0f,
+        -0.75f, 0.75f, 0.0f};
+    
+    redBatch.Begin(GL_TRIANGLE_FAN, 4);
+    redBatch.CopyVertexData3f(vBlock2);
+    redBatch.End();
+
+    GLfloat vBlock3[] = { -0.75f, -0.75f, 0.0f,
+        -0.25f, -0.75f, 0.0f,
+        -0.25f, -0.25f, 0.0f,
+        -0.75f, -0.25f, 0.0f};
+    
+    blueBatch.Begin(GL_TRIANGLE_FAN, 4);
+    blueBatch.CopyVertexData3f(vBlock3);
+    blueBatch.End();
+    
+    GLfloat vBlock4[] = { 0.25f, -0.75f, 0.0f,
+        0.75f, -0.75f, 0.0f,
+        0.75f, -0.25f, 0.0f,
+        0.25f, -0.25f, 0.0f};
+    
+    blackBatch.Begin(GL_TRIANGLE_FAN, 4);
+    blackBatch.CopyVertexData3f(vBlock4);
+    blackBatch.End();
 
 }
 
@@ -132,91 +155,56 @@ void SpecialKeys(int key, int x, int y) {
     
     GLfloat stepSize = 0.025f;
     
-//    GLfloat blockX = vVerts[0];
-//    GLfloat blockY = vVerts[10];
+    GLfloat blockX = vVerts[0];
+    GLfloat blockY = vVerts[10];
     
-//    if (key == GLUT_KEY_UP) {
-//        blockY += stepSize;
-//    }
-//
-//    if (key == GLUT_KEY_DOWN) {
-//        blockY -= stepSize;
-//    }
-//
-//    if (key == GLUT_KEY_LEFT) {
-//        blockX -= stepSize;
-//    }
-//
-//    if (key == GLUT_KEY_RIGHT) {
-//        blockX += stepSize;
-//    }
-//
-//    // 边界处理
-//    if (blockX < -1.0f) {
-//        blockX = -1.0f;
-//    }
-//
-//    if (blockX > 1.0 - blockSize * 2) {
-//        blockX = 1.0f - blockSize * 2;
-//    }
-//
-//    if (blockY < -1.0f + blockSize * 2) {
-//        blockY = -1.0f + blockSize * 2;
-//    }
-//
-//    if (blockY > 1.0f) {
-//        blockY = 1.0f;
-//    }
-//
-//    vVerts[0] = blockX;
-//    vVerts[1] = blockY - blockSize * 2;
-//
-//    vVerts[3] = blockX + blockSize*2;
-//    vVerts[4] = blockY - blockSize*2;
-//
-//    vVerts[6] = blockX + blockSize*2;
-//    vVerts[7] = blockY;
-//
-//    vVerts[9] = blockX;
-//    vVerts[10] = blockY;
-//
-//    triangleBatch.CopyVertexData3f(vVerts);
-    
-    // MARK: 使用矩阵 关注中间变化量
     if (key == GLUT_KEY_UP) {
-        
-        yPos += stepSize;
+        blockY += stepSize;
     }
-    
+
     if (key == GLUT_KEY_DOWN) {
-        yPos -= stepSize;
+        blockY -= stepSize;
     }
-    
+
     if (key == GLUT_KEY_LEFT) {
-        xPos -= stepSize;
+        blockX -= stepSize;
     }
-    
+
     if (key == GLUT_KEY_RIGHT) {
-        xPos += stepSize;
+        blockX += stepSize;
     }
-    
-    //碰撞检测
-    if (xPos < (-1.0f + blockSize)) {
-        
-        xPos = -1.0f + blockSize;
+
+    // 边界处理
+    if (blockX < -1.0f) {
+        blockX = -1.0f;
     }
-    
-    if (xPos > (1.0f - blockSize)) {
-        xPos = 1.0f - blockSize;
+
+    if (blockX > 1.0 - blockSize * 2) {
+        blockX = 1.0f - blockSize * 2;
     }
-    
-    if (yPos < (-1.0f + blockSize)) {
-        yPos = -1.0f + blockSize;
+
+    if (blockY < -1.0f + blockSize * 2) {
+        blockY = -1.0f + blockSize * 2;
     }
-    
-    if (yPos > (1.0f - blockSize)) {
-        yPos = 1.0f - blockSize;
+
+    if (blockY > 1.0f) {
+        blockY = 1.0f;
     }
+
+    vVerts[0] = blockX;
+    vVerts[1] = blockY - blockSize * 2;
+
+    vVerts[3] = blockX + blockSize*2;
+    vVerts[4] = blockY - blockSize*2;
+
+    vVerts[6] = blockX + blockSize*2;
+    vVerts[7] = blockY;
+
+    vVerts[9] = blockX;
+    vVerts[10] = blockY;
+
+    squareBatch.CopyVertexData3f(vVerts);
+
     // 强制渲染
     glutPostRedisplay();
     
@@ -250,7 +238,7 @@ int main(int argc,char *argv[])  {
 
     glutInitWindowSize(600, 600);
 
-    glutCreateWindow("Square");
+    glutCreateWindow("移动矩形，观察混合颜色");
 
     /*
 
