@@ -184,9 +184,13 @@ void RenderScene(void) {
         glDisable(GL_DEPTH_TEST);
     }
     
+    // 开启裁剪测试
     glEnable(GL_SCISSOR_TEST);
     glClearColor(0.0f, 0.0f, 1.0f, 0.0f);
     glScissor(100, 100, 600, 400);
+    glClear(GL_COLOR_BUFFER_BIT);
+    // 渲染结束后 关闭裁剪测试
+    glDisable(GL_SCISSOR_TEST);
     
     modelViewMatrix.PushMatrix(objectFrame);
     
