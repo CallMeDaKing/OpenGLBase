@@ -31,6 +31,8 @@
 
 #include <math.h>               // 内置数学库
 
+#include "StopWatch.h"
+
 #ifdef  __APPLE__
 /*
     Mac 系统下，  #include <GLUT/GLUT.h>
@@ -41,6 +43,8 @@
 #define FREEGLUT_STATIC
 #include <GL/glut.h>
 #endif
+
+#define NUM_SPHERES 50
 
 
 //定义一个，着色管理器管理类
@@ -71,8 +75,13 @@ GLFrustum               viewFrustum;          // 投影矩阵，设置图元绘�
     总结: 实际上GLFrame 是一系列变化，有GLFrame可以导出变换矩阵，只要与该变换矩阵相乘，任何物体都可以进行GLFrame相应的变化。 比如两个物体AB， 经过A 的GLFrame 导出变换矩阵，让B乘以变换矩阵，本来B 的坐标系是相对于世界坐标系的， 现在变变为了相对于A的坐标系。
  */
 
-GLBatch         floorBatch;
-GLBatch         torusBatch;
+// 初始化数组，存储随机小球
+GLFrame spheres[NUM_SPHERES];
+
+GLBatch                 floorBatch;
+GLTriangleBatch         torusBatch;
+GLTriangleBatch         sphereBatch;
+
 // 变换管道
 GLGeometryTransform transformPipline;
 
@@ -164,12 +173,61 @@ void DrawWireFramedBatch(GLBatch* pBatch) {
 
 // 当屏幕进行刷新的时候调用多次，系统在刷新的时候主动调用 比如60帧 相当于每秒刷新60次， 调用60 次
 void RenderScene(void) {
-    static GLfloat vFloorColor[] = {0, 1, 0,1};
+    // 清空缓存
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    static GLfloat vFloorColor[] = {0.0f, 1.0f, 0.0f, 1.0f};
+    static GLfloat vTorusColor[] = {1.0f, 0.0f, 0.0f, 1.0f};
+    static GLfloat vSphereColor[] = {0.0f, 0.0f, 1.0f, 1.0f};
+    
+    static CStopWatch rotTimer;
+    float yRot = rotTimer.GetElapsedSeconds() * 60.0f;
+    
+    /**  空栈
+        单元矩阵 —> 旋转 —> 移动 —> 缩放
+     */
+    modelViewMatrix.PushMatrix();
+    
+    // 添加观察者
+    M3DMatrix44f mCamera;
+    cameraFrame.GetCameraMatrix(mCamera);
+    modelViewMatrix.PushMatrix(mCamera);
+
+    // 绘制地板
     shaderManager.UseStockShader(GLT_SHADER_FLAT, transformPipline.GetModelViewProjectionMatrix(), vFloorColor);
     floorBatch.Draw();
+    
+    
+    // 绘制中心球
+    M3DVector4f vLightPos = {0, 10, 5 , 1};  // 光照
+    modelViewMatrix.Translate(0, 0, -5);
+    // 自转
+    modelViewMatrix.PushMatrix();
+    modelViewMatrix.Rotate(yRot, 0, 1, 0);
+    shaderManager.UseStockShader(GLT_SHADER_DEFAULT_LIGHT, transformPipline.GetModelViewMatrix(), transformPipline.GetProjectionMatrix(), vLightPos, vTorusColor);
+    torusBatch.Draw();
+    modelViewMatrix.PopMatrix();
+    
+    // 绘制 50 个小球
+    for (int i = 0; i < NUM_SPHERES; i++) {
+        modelViewMatrix.PushMatrix();
+        modelViewMatrix.MultMatrix(spheres[i]);
+        shaderManager.UseStockShader(GLT_SHADER_DEFAULT_LIGHT, transformPipline.GetModelViewMatrix(), transformPipline.GetProjectionMatrix(), vLightPos, vSphereColor);
+        sphereBatch.Draw();
+        modelViewMatrix.PopMatrix();
+    }
+    
+    // 绘制小球围绕打球旋转
+    modelViewMatrix.Rotate(yRot * -2, 0, 1.0f, 0);
+    modelViewMatrix.Translate(1.0f, 0, 0);
+    shaderManager.UseStockShader(GLT_SHADER_DEFAULT_LIGHT, transformPipline.GetModelViewMatrix(), transformPipline.GetProjectionMatrix(), vLightPos, vSphereColor);
+    sphereBatch.Draw();
+    
+    
+    modelViewMatrix.PopMatrix();
+    modelViewMatrix.PopMatrix();
     glutSwapBuffers();
-
+    glutPostRedisplay();
 }
 
 // 两个作用， 1.设置视图大小 2.设置投影矩阵
@@ -206,9 +264,19 @@ void setupRC() {
     }
     floorBatch.End();
     
-    gltMakeTorus(torusBatch, 0.6, 0.3, 40, 40);
+    // 屏幕中心球
+    gltMakeSphere(torusBatch, 0.6, 40, 40);
     
+    // 其他小球
+    gltMakeSphere(sphereBatch, 0.2f, 20, 40);
     
+    // 随机放置小球
+    for (int i = 0; i < NUM_SPHERES; i++) {
+        // 保持Y值相同
+        GLfloat x = ((GLfloat)((rand() % 400) - 200) * 0.1f);
+        GLfloat z = ((GLfloat)((rand() % 400) - 200) * 0.1f);
+        spheres[i].SetOrigin(x, 0.0f,z);
+    }
 }
 
 void keyPressFunc(unsigned char key, int x, int y) {
@@ -252,24 +320,23 @@ void keyPressFunc(unsigned char key, int x, int y) {
 
 void SpecialKeys(int key, int x, int y) {
     
-    // 1.旋转物体
-    if (key == GLUT_KEY_UP) { // 围绕x 轴转
-        objectFrame.RotateWorld(m3dDegToRad(-5), 1.0f, 0.0f, 0.0f);
+    float liner = 0.1f;
+    float angular = float(m3dDegToRad(5.0f));
+    
+    if (key == GLUT_KEY_UP) {
+        cameraFrame.MoveForward(liner);
     }
-
     if (key == GLUT_KEY_DOWN) {
-        objectFrame.RotateWorld(m3dDegToRad(5), 1.0f, 0.0f, 0.0f);
+        cameraFrame.MoveForward(-liner);
     }
-    
     if (key == GLUT_KEY_LEFT) {
-        objectFrame.RotateWorld(m3dDegToRad(-5), 0.0f, 1.0f, 0.0f);
+        cameraFrame.RotateWorld(angular, 0.0f, 1, 0.0f);
     }
-    
     if (key == GLUT_KEY_RIGHT) {
-        objectFrame.RotateWorld(m3dDegToRad(5), 0.0f, 1.0f, 0.0f);
+        cameraFrame.RotateWorld(-angular, 0.0f, 1, 0.0f);
     }
     
-    // 强制刷新
+    // 强制刷新 不加也可以
     glutPostRedisplay();
 }
 
