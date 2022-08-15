@@ -9,9 +9,9 @@
 
 #define GL_SILENCE_DEPRECATION   // 去除废弃api 警告
 
-#include "GLShaderManager.h"     // 管理固定着色器管理类， 如果没有着色器则无法在OpenGL核心框架进行着色， 两个功能： 1、创建并管理着色器 2、提供一组存储着色器，进行初步的渲染操作
-
 #include "GLTools.h"             // GLTool.h 包含了大部分类似C语言的独立函数
+
+#include "GLShaderManager.h"     // 管理固定着色器管理类， 如果没有着色器则无法在OpenGL核心框架进行着色， 两个功能： 1、创建并管理着色器 2、提供一组存储着色器，进行初步的渲染操作
 
 /*  GLMatrixStack 通过调用顶部载入这个单位矩阵
     void GLMatrixStack::LoadIndentiy(void);
@@ -72,6 +72,7 @@ GLFrustum               viewFrustum;          // 投影矩阵，设置图元绘�
  */
 
 GLBatch         floorBatch;
+GLBatch         torusBatch;
 // 变换管道
 GLGeometryTransform transformPipline;
 
@@ -204,6 +205,10 @@ void setupRC() {
         floorBatch.Vertex3f(-20.0f, -0.55f, x);
     }
     floorBatch.End();
+    
+    gltMakeTorus(torusBatch, 0.6, 0.3, 40, 40);
+    
+    
 }
 
 void keyPressFunc(unsigned char key, int x, int y) {
