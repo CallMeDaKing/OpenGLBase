@@ -71,15 +71,7 @@ GLFrustum               viewFrustum;          // 投影矩阵，设置图元绘�
     总结: 实际上GLFrame 是一系列变化，有GLFrame可以导出变换矩阵，只要与该变换矩阵相乘，任何物体都可以进行GLFrame相应的变化。 比如两个物体AB， 经过A 的GLFrame 导出变换矩阵，让B乘以变换矩阵，本来B 的坐标系是相对于世界坐标系的， 现在变变为了相对于A的坐标系。
  */
 
-// 容器类 (7 中不同容器对象， 每个容器类对应一个对象)
-GLBatch     pointBatch;
-GLBatch     lineBatch;
-GLBatch     lineStripBatch;
-GLBatch     lineLoopBatch;
-GLBatch     triangleBatch;
-GLBatch     triangleStripBatch;
-GLBatch     triangleFanBatch;
-
+GLBatch         floorBatch;
 // 变换管道
 GLGeometryTransform transformPipline;
 
@@ -171,83 +163,25 @@ void DrawWireFramedBatch(GLBatch* pBatch) {
 
 // 当屏幕进行刷新的时候调用多次，系统在刷新的时候主动调用 比如60帧 相当于每秒刷新60次， 调用60 次
 void RenderScene(void) {
-    
-    //MARK: 方法2  使用矩阵实现
-    // 清除上一次缓存
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    
-    // 压栈操作， modelViewMatrix 作为个堆栈用于记录中间变换状态的矩阵
-    modelViewMatrix.PushMatrix();
-    
-    // 获取观察者矩阵 并将单元矩阵和观察者矩阵相乘
-    M3DMatrix44f mCameraMatrix;
-    cameraFrame.GetCameraMatrix(mCameraMatrix);
-    modelViewMatrix.MultMatrix(mCameraMatrix);
-    
-    // 获取物体矩阵
-    M3DMatrix44f mObjectMatrix;
-    objectFrame.GetMatrix(mObjectMatrix);
-    // 矩阵相乘 newCamera 矩阵 和 物体矩阵相乘 最终结果放到放到模型视图矩阵堆栈中
-    modelViewMatrix.MultMatrix(mObjectMatrix);
-    
-    // 使用平面着色器绘制 transformPipline获取模型定点数据，这个定点是mult（观察者矩阵，物体矩阵） 混合后的矩阵数据  mvp (modelViewProject) Matrix 模型视图矩阵
-    shaderManager.UseStockShader(GLT_SHADER_FLAT, transformPipline.GetModelViewProjectionMatrix(), vBlack);
-
-    switch (nStep) {
-        case 0:
-            glPointSize(4.0f);
-            pointBatch.Draw();
-            glPointSize(1.0f); // 需要恢复默认大小
-            break;
-        case 1:
-            glLineWidth(4.0f);
-            lineBatch.Draw();
-            glLineWidth(1.0f);
-            break;
-        case 2:
-            glLineWidth(4.0f);
-            lineStripBatch.Draw();
-            glLineWidth(1.0f);
-            break;
-        case 3:
-            glLineWidth(4.0f);
-            lineLoopBatch.Draw();
-            glLineWidth(1.0f);
-            break;
-        case 4:
-            DrawWireFramedBatch(&triangleBatch);
-            break;
-        case 5:
-            DrawWireFramedBatch(&triangleStripBatch);
-            break;
-        case 6:
-            DrawWireFramedBatch(&triangleFanBatch);
-            break;
-            
-            
-            
-        default:
-            break;
-    }
-    
-    // 出栈
-    modelViewMatrix.PopMatrix();
-        
-    // 进行缓冲区交换
+    static GLfloat vFloorColor[] = {0, 1, 0,1};
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    shaderManager.UseStockShader(GLT_SHADER_FLAT, transformPipline.GetModelViewProjectionMatrix(), vFloorColor);
+    floorBatch.Draw();
     glutSwapBuffers();
 
 }
 
 // 两个作用， 1.设置视图大小 2.设置投影矩阵
 void changeSize(int w,int h) {
-    
+    // 设置视窗大小
     glViewport(0, 0, w, h);
-    //创建投影矩阵，并将它载入投影矩阵堆栈中
-    viewFrustum.SetPerspective(35.0f, float(w) / float(h), 1.0f, 500.0f);
+    
+    // 2. 设置投影矩阵
+    viewFrustum.SetPerspective(35.0f, float(w)/float(h), 1, 100.0f);
     projectionMatrix.LoadMatrix(viewFrustum.GetProjectionMatrix());
     
-    //调用顶部载入单元矩阵
-    modelViewMatrix.LoadIdentity();
+    // 3.
+    transformPipline.SetMatrixStacks(modelViewMatrix, projectionMatrix);
 }
 
 /*
@@ -255,145 +189,21 @@ void changeSize(int w,int h) {
     处理业务：  1、 设置窗口背景颜色  2、初始化存储着色器 shaderManager  3、 设置图形顶点数据  4、 利用GLBatch 三角形批次类 将数据传递到着色器
  */
 void setupRC() {
-
-    //设置清屏颜色（背景颜色 灰色）
-    glClearColor(0.7f, 0.7f, 0.7f, 1.0f);
+    //1.
+    glClearColor(0, 0, 0, 1);
     shaderManager.InitializeStockShaders();
+    //2.
+    glEnable(GL_DEPTH_TEST);
     
-    // 使用平面着色器
-    // 投影矩阵 、移动变换矩阵  --> 变换管道，快速的进行矩阵相乘 这个transforPipline 是需要先在changeSize 函数中设置
-    transformPipline.SetMatrixStacks(modelViewMatrix, projectionMatrix);
-    
-    // 设置观察者距离物体的位置 z  + - 可以理解为移动的方向 竖直代表距离
-    cameraFrame.MoveForward(-15.0f);
-    
-    // 设置定点数据（ 物体坐标系 转为 规范坐标系），然后render scene
-    GLfloat vCoast[9] = {
-        3,3,0,0,3,0,3,0,0
-    };
-    pointBatch.Begin(GL_POINTS, 3);
-    pointBatch.CopyVertexData3f(vCoast);
-    pointBatch.End();
-    
-    lineBatch.Begin(GL_LINES, 3);
-    lineBatch.CopyVertexData3f(vCoast);
-    lineBatch.End();
-    
-    lineStripBatch.Begin(GL_LINE_STRIP, 3);
-    lineStripBatch.CopyVertexData3f(vCoast);
-    lineStripBatch.End();
-    
-    lineLoopBatch.Begin(GL_LINE_LOOP, 3);
-    lineLoopBatch.CopyVertexData3f(vCoast);
-    lineLoopBatch.End();
-    
-    
-    // 通过三角形创建金字塔
-    GLfloat vPyramid[12][3] = {
-        -2.0f, 0.0f, -2.0f,
-        2.0f, 0.0f, -2.0f,
-        0.0f, 4.0f, 0.0f,
-
-        2.0f, 0.0f, -2.0f,
-        2.0f, 0.0f, 2.0f,
-        0.0f, 4.0f, 0.0f,
-
-        2.0f, 0.0f, 2.0f,
-        -2.0f, 0.0f, 2.0f,
-        0.0f, 4.0f, 0.0f,
-
-        -2.0f, 0.0f, 2.0f,
-        -2.0f, 0.0f, -2.0f,
-        0.0f, 4.0f, 0.0f
-    };
-    
-    triangleBatch.Begin(GL_TRIANGLES, 12);
-    triangleBatch.CopyVertexData3f(vPyramid);
-    triangleBatch.End();
-    
-    // 三角形扇形--六边形
-    GLfloat vPoints[100][3];
-    int nVerts = 0;
-    //半径
-    GLfloat r = 3.0f;
-    //原点(x,y,z) = (0,0,0);
-    vPoints[nVerts][0] = 0.0f;
-    vPoints[nVerts][1] = 0.0f;
-    vPoints[nVerts][2] = 0.0f;
-    
-    
-    //M3D_2PI 就是2Pi 的意思，就一个圆的意思。 绘制圆形
-    for(GLfloat angle = 0; angle < M3D_2PI; angle += M3D_2PI / 6.0f) {
+    floorBatch.Begin(GL_LINES, 324);
+    for(GLfloat x = -20.0; x <= 20.0f; x+= 0.5) {
+        floorBatch.Vertex3f(x, -0.55f, 20.0f);
+        floorBatch.Vertex3f(x, -0.55f, -20.0f);
         
-        //数组下标自增（每自增1次就表示一个顶点）
-        nVerts++;
-        /*
-         弧长=半径*角度,这里的角度是弧度制,不是平时的角度制
-         既然知道了cos值,那么角度=arccos,求一个反三角函数就行了
-         */
-        //x点坐标 cos(angle) * 半径
-        vPoints[nVerts][0] = float(cos(angle)) * r;
-        //y点坐标 sin(angle) * 半径
-        vPoints[nVerts][1] = float(sin(angle)) * r;
-        //z点的坐标
-        vPoints[nVerts][2] = -0.5f;
+        floorBatch.Vertex3f(20.0f, -0.55f, x);
+        floorBatch.Vertex3f(-20.0f, -0.55f, x);
     }
-    
-    // 结束扇形 前面一共绘制7个顶点（包括圆心）
-    //添加闭合的终点
-    //课程添加演示：屏蔽177-180行代码，并把绘制节点改为7.则三角形扇形是无法闭合的。
-    nVerts++;
-    vPoints[nVerts][0] = r;
-    vPoints[nVerts][1] = 0;
-    vPoints[nVerts][2] = 0.0f;
-    
-    // 加载！
-    //GL_TRIANGLE_FAN 以一个圆心为中心呈扇形排列，共用相邻顶点的一组三角形
-    triangleFanBatch.Begin(GL_TRIANGLE_FAN, 8);
-    triangleFanBatch.CopyVertexData3f(vPoints);
-    triangleFanBatch.End();
-    
-    //三角形条带，一个小环或圆柱段
-    //顶点下标
-    int iCounter = 0;
-    //半径
-    GLfloat radius = 3.0f;
-    //从0度~360度，以0.3弧度为步长
-    for(GLfloat angle = 0.0f; angle <= (2.0f*M3D_PI); angle += 0.3f)
-    {
-        //或许圆形的顶点的X,Y
-        GLfloat x = radius * sin(angle);
-        GLfloat y = radius * cos(angle);
-        
-        //绘制2个三角形（他们的x,y顶点一样，只是z点不一样）
-        vPoints[iCounter][0] = x;
-        vPoints[iCounter][1] = y;
-        vPoints[iCounter][2] = -0.5;
-        iCounter++;
-        
-        vPoints[iCounter][0] = x;
-        vPoints[iCounter][1] = y;
-        vPoints[iCounter][2] = 0.5;
-        iCounter++;
-    }
-    
-    // 关闭循环
-    printf("三角形带的顶点数：%d\n",iCounter);
-    //结束循环，在循环位置生成2个三角形
-    vPoints[iCounter][0] = vPoints[0][0];
-    vPoints[iCounter][1] = vPoints[0][1];
-    vPoints[iCounter][2] = -0.5;
-    iCounter++;
-    
-    vPoints[iCounter][0] = vPoints[1][0];
-    vPoints[iCounter][1] = vPoints[1][1];
-    vPoints[iCounter][2] = 0.5;
-    iCounter++;
-    
-    // GL_TRIANGLE_STRIP 共用一个条带（strip）上的顶点的一组三角形
-    triangleStripBatch.Begin(GL_TRIANGLE_STRIP, iCounter);
-    triangleStripBatch.CopyVertexData3f(vPoints);
-    triangleStripBatch.End();
+    floorBatch.End();
 }
 
 void keyPressFunc(unsigned char key, int x, int y) {
@@ -468,7 +278,6 @@ int main(int argc,char *argv[])  {
     gltSetWorkingDirectory(argv[0]);
     
     //初始化GLUT库,这个函数只是传说命令参数并且初始化glut库
-
     glutInit(&argc, argv);
 
     /*
