@@ -186,6 +186,7 @@ void RenderScene(void) {
     /**  空栈
         单元矩阵 —> 旋转 —> 移动 —> 缩放
      */
+    
     modelViewMatrix.PushMatrix();
     
     // 添加观察者
@@ -220,6 +221,7 @@ void RenderScene(void) {
     // 绘制小球围绕打球旋转
     modelViewMatrix.Rotate(yRot * -2, 0, 1.0f, 0);
     modelViewMatrix.Translate(1.0f, 0, 0);
+
     shaderManager.UseStockShader(GLT_SHADER_DEFAULT_LIGHT, transformPipline.GetModelViewMatrix(), transformPipline.GetProjectionMatrix(), vLightPos, vSphereColor);
     sphereBatch.Draw();
     
@@ -263,6 +265,8 @@ void setupRC() {
         floorBatch.Vertex3f(-20.0f, -0.55f, x);
     }
     floorBatch.End();
+    
+    cameraFrame.MoveForward(-5);
     
     // 屏幕中心球
     gltMakeSphere(torusBatch, 0.6, 40, 40);
