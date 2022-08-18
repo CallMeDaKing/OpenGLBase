@@ -16,6 +16,10 @@
 		FA5F5A9E2887FE1C007A9035 /* GLUT.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FA5F5A9D2887FE1C007A9035 /* GLUT.framework */; };
 		FA5F5ABB2887FF9F007A9035 /* libGLTools.a in Frameworks */ = {isa = PBXBuildFile; fileRef = FA5F5ABA2887FF9F007A9035 /* libGLTools.a */; };
 		FA5F5ABD2887FFF3007A9035 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA5F5ABC2887FFF3007A9035 /* main.cpp */; };
+		FABE4ECF28ADDF6900603745 /* floor.tga in Resources */ = {isa = PBXBuildFile; fileRef = FABE4ECB28ADDF6900603745 /* floor.tga */; };
+		FABE4ED028ADDF6900603745 /* brick.tga in Resources */ = {isa = PBXBuildFile; fileRef = FABE4ECC28ADDF6900603745 /* brick.tga */; };
+		FABE4ED128ADDF6900603745 /* ceiling.tga in Resources */ = {isa = PBXBuildFile; fileRef = FABE4ECD28ADDF6900603745 /* ceiling.tga */; };
+		FABE4ED228ADDF6900603745 /* stone.tga in Resources */ = {isa = PBXBuildFile; fileRef = FABE4ECE28ADDF6900603745 /* stone.tga */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -63,10 +67,10 @@
 		FA5F5AB72887FF36007A9035 /* glxew.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = glxew.h; sourceTree = "<group>"; };
 		FA5F5ABA2887FF9F007A9035 /* libGLTools.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libGLTools.a; sourceTree = "<group>"; };
 		FA5F5ABC2887FFF3007A9035 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
-		FABE4EC628ACF60400603745 /* brick.tga */ = {isa = PBXFileReference; lastKnownFileType = file; path = brick.tga; sourceTree = "<group>"; };
-		FABE4EC728ACF60400603745 /* floor.tga */ = {isa = PBXFileReference; lastKnownFileType = file; path = floor.tga; sourceTree = "<group>"; };
-		FABE4EC828ACF60400603745 /* stone.tga */ = {isa = PBXFileReference; lastKnownFileType = file; path = stone.tga; sourceTree = "<group>"; };
-		FABE4EC928ACF60400603745 /* ceiling.tga */ = {isa = PBXFileReference; lastKnownFileType = file; path = ceiling.tga; sourceTree = "<group>"; };
+		FABE4ECB28ADDF6900603745 /* floor.tga */ = {isa = PBXFileReference; lastKnownFileType = file; path = floor.tga; sourceTree = "<group>"; };
+		FABE4ECC28ADDF6900603745 /* brick.tga */ = {isa = PBXFileReference; lastKnownFileType = file; path = brick.tga; sourceTree = "<group>"; };
+		FABE4ECD28ADDF6900603745 /* ceiling.tga */ = {isa = PBXFileReference; lastKnownFileType = file; path = ceiling.tga; sourceTree = "<group>"; };
+		FABE4ECE28ADDF6900603745 /* stone.tga */ = {isa = PBXFileReference; lastKnownFileType = file; path = stone.tga; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -121,12 +125,12 @@
 		FA5F5A6E2887FDCA007A9035 /* OpenGLBase */ = {
 			isa = PBXGroup;
 			children = (
-				FABE4EC528ACF5D900603745 /* Resource */,
 				FA5F5AA32887FE87007A9035 /* include */,
 				FA5F5A732887FDCF007A9035 /* Assets.xcassets */,
 				FA5F5A752887FDCF007A9035 /* Main.storyboard */,
 				FA5F5A782887FDCF007A9035 /* OpenGLBase.entitlements */,
 				FA5F5ABC2887FFF3007A9035 /* main.cpp */,
+				FABE4ECA28ADDBFC00603745 /* Supporting Files */,
 			);
 			path = OpenGLBase;
 			sourceTree = "<group>";
@@ -187,15 +191,15 @@
 			path = GL;
 			sourceTree = "<group>";
 		};
-		FABE4EC528ACF5D900603745 /* Resource */ = {
+		FABE4ECA28ADDBFC00603745 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
-				FABE4EC628ACF60400603745 /* brick.tga */,
-				FABE4EC928ACF60400603745 /* ceiling.tga */,
-				FABE4EC728ACF60400603745 /* floor.tga */,
-				FABE4EC828ACF60400603745 /* stone.tga */,
+				FABE4ECC28ADDF6900603745 /* brick.tga */,
+				FABE4ECD28ADDF6900603745 /* ceiling.tga */,
+				FABE4ECB28ADDF6900603745 /* floor.tga */,
+				FABE4ECE28ADDF6900603745 /* stone.tga */,
 			);
-			path = Resource;
+			path = "Supporting Files";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -302,7 +306,11 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FABE4ECF28ADDF6900603745 /* floor.tga in Resources */,
 				FA5F5A742887FDCF007A9035 /* Assets.xcassets in Resources */,
+				FABE4ED028ADDF6900603745 /* brick.tga in Resources */,
+				FABE4ED128ADDF6900603745 /* ceiling.tga in Resources */,
+				FABE4ED228ADDF6900603745 /* stone.tga in Resources */,
 				FA5F5A772887FDCF007A9035 /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

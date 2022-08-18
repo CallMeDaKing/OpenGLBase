@@ -83,9 +83,6 @@ GLGeometryTransform transformPipline;
 
 // 当屏幕进行刷新的时候调用多次，系统在刷新的时候主动调用 比如60帧 相当于每秒刷新60次， 调用60 次
 void RenderScene(void) {
-        
-    static GLfloat vLightpos[] = {1.0f, 1.0f, 0.0f};
-    static GLfloat vWhite[] = {1.0f, 1.0f, 1.0f, 1.0f};
     
     // 清理缓存
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -128,7 +125,7 @@ void changeSize(int w,int h) {
     glViewport(0, 0, w, h);
     
     // 2. 设置投影矩阵
-    viewFrustum.SetPerspective(35.0f, float(w)/float(h), 1, 100.0f);
+    viewFrustum.SetPerspective(35.0f, float(w)/float(h), 1, 500.0f);
     projectionMatrix.LoadMatrix(viewFrustum.GetProjectionMatrix());
     
     // 3.
@@ -136,10 +133,9 @@ void changeSize(int w,int h) {
 }
 
 bool LoadTGATexture(const char *zfileName, GLenum minFilter, GLenum magFilter, GLenum wrapMode){
-    GLbyte * pBites;
-    int nWidth, nHeight, nComponents;
-    
-    GLenum eFormat;
+    GLbyte *pBites;
+    int nWidth, nHeight, nComponents;    // nComponents 像素组成 RGBA RGB ...
+    GLenum eFormat;  // 像素数据类型， 常见的无符号整形 GL_UNSIGNED_BYTE
     
     /*
     《1》读取纹理， 读取像素
@@ -151,10 +147,8 @@ bool LoadTGATexture(const char *zfileName, GLenum minFilter, GLenum magFilter, G
         返回值： pBits 指向图像数据的指针
      */
     pBites = gltReadTGABits(zfileName, &nWidth, &nHeight, &nComponents, &eFormat);
-    if (pBites == NULL) {
+    if (pBites == NULL)
         return false;
-    }
-    
     
     /*
     《2》设置纹理参数
@@ -323,12 +317,11 @@ void MakePyramid(GLBatch& pyramidBatch) {
 void setupRC() {
     //1.
     glClearColor(0.7f, 0.7f, 0.7f, 1.0f);
-    
-    glEnable(GL_DEPTH_TEST);
-    
-    //2.
     shaderManager.InitializeStockShaders();
-    
+
+    //2.
+    glEnable(GL_DEPTH_TEST);
+
     //3.分配纹理对象 参数1: 纹理对象个数  参数2： 纹理对象指针   textTureID： GLUint类型
     glGenTextures(1, &textTureID);
     
@@ -390,8 +383,5 @@ int main(int argc,char *argv[])  {
     ShutdownRC();
     
     return 0;
-    
-    
 
-    
 }
