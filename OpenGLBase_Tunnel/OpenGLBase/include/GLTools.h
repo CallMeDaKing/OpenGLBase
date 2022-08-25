@@ -188,4 +188,3 @@ void gltGenerateOrtho2DMat(GLuint width, GLuint height, M3DMatrix44f &orthoMatri
 
 
 #endif
-*

@@ -44,13 +44,16 @@
 #include <GL/glut.h>
 #endif
 
+#define NUM_SPHERES 50
+
+
 //定义一个，着色管理器管理类
 GLShaderManager         shaderManager;
 GLMatrixStack           modelViewMatrix;      // 模型视图矩阵堆栈 管理模型矩阵变化
 GLMatrixStack           projectionMatrix;     // 投影矩阵堆栈 管理投影矩阵变化
+GLFrame                 cameraFrame;          // 记录观察者（矩阵） 变化 上下左右移动
+GLFrame                 objectFrame;          // 记录物体（矩阵）变化 操作当前对象的变化的矩阵， 上下左右移动。
 GLFrustum               viewFrustum;          // 投影矩阵，设置图元绘制时的投影方式  透视投影 perspective  正投影 orthographics
-GLGeometryTransform    transformPipeline;     //几何变换管线
-
 /*
     GLFrame 叫参考帧， 存储了世界1个坐标系 2个世界坐标系下的方向向量  也就是9个glfloat值分别用来表示： 当前位置、向前方向向量、向上方向向量
             用于表示世界坐标系中的任意物质的位置和方向， 无论是相机还是物体模型，都可以使用GLFrame表示
@@ -70,100 +73,44 @@ GLGeometryTransform    transformPipeline;     //几何变换管线
  
     总结: 实际上GLFrame 是一系列变化，有GLFrame可以导出变换矩阵，只要与该变换矩阵相乘，任何物体都可以进行GLFrame相应的变化。 比如两个物体AB， 经过A 的GLFrame 导出变换矩阵，让B乘以变换矩阵，本来B 的坐标系是相对于世界坐标系的， 现在变变为了相对于A的坐标系。
  */
+// 变换管道
+GLGeometryTransform transformPipline;
 
-GLBatch             floorBatch;     // 地面
-GLBatch             ceilingBatch;   // 天花板
-GLBatch             leftWallBatch;  // 左墙面
-GLBatch             rightWallBatch; // 右墙面
+// 批次类容器
+GLBatch         floorBatch;         // 地面
+GLBatch         ceilingBatch;       // 天花板
+GLBatch         leftWallBatch;      // 左侧墙面
+GLBatch         rightWallBatch;     // 右侧墙面
 
-// 初始深度
-GLfloat             viewZ = -65.0f;
+GLfloat         viewZ = -65.0f;     // 初始深度
 
-#define TEXTURE_BRICK   0    // 墙面
-#define TEXTURE_FLOOR   1    // 地板
-#define TEXTURE_CEILING 2    // 纹理天花板
-#define TEXTURE_COUNT   3    // 纹理个数
-GLuint textures[TEXTURE_COUNT]; // 纹理数组
+// 纹理标识符
+#define TEXTURE_BRICK       0   // 墙
+#define TEXTURE_FLOOR       1   // 地板
+#define TEXTURE_CELLINg     2   // 天花板
+#define TEXTURE_COUNT       3   // 纹理个数
 
-const char *szTextureFiles[TEXTURE_COUNT] = {  "brick.tga", "floor.tga", "ceiling.tga"  };
+// 纹理数组
+GLuint          textures[TEXTURE_COUNT];
+
+// tga 文件数组
+const char *szTextureFiles[TEXTURE_COUNT] = { "brick.tga", "floor.tga", "ceiling.tga" };
+
 
 // 当屏幕进行刷新的时候调用多次，系统在刷新的时候主动调用 比如60帧 相当于每秒刷新60次， 调用60 次
 void RenderScene(void) {
+    
 
 }
 
 // 两个作用， 1.设置视图大小 2.设置投影矩阵
 void changeSize(int w,int h) {
-    // 设置视窗大小
-    glViewport(0, 0, w, h);
-    
-    // 2. 设置投影矩阵
-    viewFrustum.SetPerspective(35.0f, float(w)/float(h), 1, 500.0f);
-    projectionMatrix.LoadMatrix(viewFrustum.GetProjectionMatrix());
-    
-    // 3.
-    transformPipline.SetMatrixStacks(modelViewMatrix, projectionMatrix);
+
 }
 
 bool LoadTGATexture(const char *zfileName, GLenum minFilter, GLenum magFilter, GLenum wrapMode){
-    GLbyte *pBites;
-    int nWidth, nHeight, nComponents;    // nComponents 像素组成 RGBA RGB ...
-    GLenum eFormat;  // 像素数据类型， 常见的无符号整形 GL_UNSIGNED_BYTE
-    
-    /*
-    《1》读取纹理， 读取像素
-        参数1 纹理文件名称
-        参数2 文件宽度地址
-        参数3 文件高度地址
-        参数4 文件组件地址
-        参数5 文件格式地址
-        返回值： pBits 指向图像数据的指针
-     */
-    pBites = gltReadTGABits(zfileName, &nWidth, &nHeight, &nComponents, &eFormat);
-    if (pBites == NULL)
-        return false;
-    
-    /*
-    《2》设置纹理参数
-        参数1： 纹理维度  1D 2D 3D  默认使用 GL_TEXTURE_2D
-        参数2： 为ST 坐标设置模式
-        参数3： wrapMode 环绕模式
-    */
-    
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapMode);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapMode);
-    
-    /*
-        设置放大缩小的填充模式
-     */
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minFilter);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magFilter);
-    
-    /*
-     《3》 载入纹理
-        参数1： 纹理维度 1D 2D 3D
-        参数2： mip 贴图层次 默认0
-        参数3： 纹理单元存储的颜色成分 （从读取像素图获取）
-        参数4： 加载纹理宽
-        参数5:  加载纹理高
-        参数6： 加载纹理深度
-        参数7： 像素数据的数据类型  GL_UNSIGNED_BYTE, 每个颜色分量是一个8位无符号整数
-        参数8： 指向纹理图像数据的指针
-     */
-    
-    glTexImage2D(GL_TEXTURE_2D, 0, nComponents, nWidth, nHeight, 0, eFormat, GL_UNSIGNED_BYTE, pBites);
-    
-    // 使用完pBits 释放
-    free(pBites);
-    
-    if (minFilter == GL_LINEAR_MIPMAP_LINEAR  ||
-        minFilter == GL_LINEAR_MIPMAP_NEAREST ||
-        minFilter == GL_NEAREST_MIPMAP_LINEAR ||
-        minFilter == GL_NEAREST_MIPMAP_NEAREST) {
-        glGenerateMipmap(GL_TEXTURE_2D);
-    }
-    
-    return true;
+
+    return 0;
 }
 
 // 清理…例如删除纹理对象
@@ -177,49 +124,35 @@ void ShutdownRC(void) {
     处理业务：  1、 设置窗口背景颜色  2、初始化存储着色器 shaderManager  3、 设置图形顶点数据  4、 利用GLBatch 三角形批次类 将数据传递到着色器
  */
 void setupRC() {
-    //1.
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     
     shaderManager.InitializeStockShaders();
     
     GLbyte *pBytes;
-    GLint iWidth, iHeight, iCompenents;
-    GLenum eFormat;
+    GLint iWidth, iHeight, iComponents;
+    GLenum eFformat;
     GLint iLoop;
     
     glGenTextures(TEXTURE_COUNT, textures);
     
     for (iLoop = 0; iLoop < TEXTURE_COUNT; iLoop++) {
         glBindTexture(GL_TEXTURE_2D, textures[iLoop]);
+        pBytes = gltReadTGABits(szTextureFiles[iLoop], &iWidth, &iHeight, &iComponents, &eFformat);
         
-        // 读取tga 文件
-        pBytes = gltReadTGABits(szTextureFiles[iLoop], &iWidth, &iHeight, &iCompenents, &eFormat);
-        
-        // 设置图片缩小放大的过滤方式
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         
-        // 设置环绕模式 ST  对应 x y
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         
-        // 加载纹理
-        glTexImage2D(GL_TEXTURE_2D, 0, iCompenents, iWidth, iHeight, 0, eFormat, GL_UNSIGNED_BYTE, pBytes);
+        glTexImage2D(GL_TEXTURE_2D, 0, iComponents, iWidth, iHeight, 0, eFformat, GL_UNSIGNED_BYTE, pBytes);
         
-        /*
-            为纹理对象 生成一组完整的mipmap
-         参数： 纹理维度  1D  2D 3D
+        /**为纹理对象生成一组完整的mipmap glGenerateMipmap
+         参数1：纹理维度，GL_TEXTURE_1D,GL_TEXTURE_2D,GL_TEXTURE_2D
          */
         glGenerateMipmap(GL_TEXTURE_2D);
-        
-        // 释放原始纹理数据
         free(pBytes);
     }
-    
-    // 设置顶点数据
-    
-    // 绘制地板
-    
     
  }
 
@@ -227,27 +160,25 @@ void SpecialKeys(int key, int x, int y) {
     
 }
 
-void ProcessMenue(int value) {
+void ProcessMenu(int value) {
     
 }
 
 int main(int argc,char *argv[])  {
-    
-    // argv[0] "/Users/liking/Library/Developer/Xcode/DerivedData/01_OpenGL_环境搭建-cwwgkzykdrwdzqfjiveckxxyklvj/Build/Products/Debug/01 OpenGL 环境搭建.app/Contents/MacOS/01 OpenGL 环境搭建" 路径
+    // argv 存储的项目目录路径
     gltSetWorkingDirectory(argv[0]);
-    
+
     glutInit(&argc, argv);
     glutInitDisplayMode(GL_DOUBLE | GL_RGBA);
-    glutInitWindowSize(800, 600);
+    glutInitWindowSize(800.0, 600.0);
     glutCreateWindow("Tunnel");
     
-    // 注册函数
-    glutSpecialFunc(SpecialKeys);
     glutReshapeFunc(changeSize);
+    glutSpecialFunc(SpecialKeys);
     glutDisplayFunc(RenderScene);
     
-    // 创建menue
-    glutCreateMenu(ProcessMenue);
+    // 加入菜单
+    glutCreateMenu(ProcessMenu);
     glutAddMenuEntry("GL_NEAREST", 0);
     glutAddMenuEntry("GL_LINEAR", 1);
     glutAddMenuEntry("GL_NEAREST_MIPMAP_NEAREST", 2);
@@ -258,17 +189,14 @@ int main(int argc,char *argv[])  {
     glutAddMenuEntry("Anisotropic Off", 7);
     glutAttachMenu(GLUT_RIGHT_BUTTON);
     
-    GLenum err = glewInit();
-    if (err != GLEW_OK) {
-        fprintf(stderr, "GLEW Error: %s\n", glewGetErrorString(err));
+    GLenum error = glewInit();
+    if (error != GLEW_OK) {
+        fprintf(stderr, "GLEW Error: %s\n", glewGetErrorString(error));
         return 1;
     }
     
-    // 启动循环 关闭纹理
     setupRC();
     glutMainLoop();
-    ShutdownRC();
-    
+    glutShowWindow();
     return 0;
-
 }
