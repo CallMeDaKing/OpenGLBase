@@ -411,6 +411,6 @@ int main(int argc,char *argv[])  {
     
     setupRC();
     glutMainLoop();
-    glutShowWindow();
+    ShutdownRC();
     return 0;
 }
