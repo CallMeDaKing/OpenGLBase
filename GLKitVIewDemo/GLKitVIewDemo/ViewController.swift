@@ -36,7 +36,7 @@ class ViewController: GLKViewController  {
             view?.context = context
         }
         // 设置背景颜色
-        glClearColor(1, 0, 0, 1)
+        glClearColor(1, 1, 0, 1)
         
     }
     
