@@ -15,7 +15,7 @@ typedef struct {
     GLKVector3 normal;         // 法线
 } CCVectex;
 
-static NSInteger const kCoordCount = 36;
+static NSInteger const kCoordCount = 36; //根据图元装配方式，在这里 一个面有36个顶点
 
 @interface CubeViewController () <GLKViewDelegate>
 
