@@ -97,7 +97,20 @@
 
 // 纹理解压缩
 - (void)setupTexture:(NSString *)fileName {
+    // 1 纹理解压缩 OpenGL ES
+    CGImageRef spriteImage = [UIImage imageNamed:fileName].CGImage;
     
+    if (!spriteImage) {
+        NSLog(@"Faile to Load image~");
+        return;  // exit(1)
+    }
+    
+    // 2 创建上下文
+    size_t width = CGImageGetWidth(spriteImage);
+    size_t height = CGImageGetHeight(spriteImage);
+    GLubyte *spriteData = (GLubyte *)calloc(width * height * 4, sizeof(GLubyte));
+    
+    CGContextRef spriteContext = CGBitmapContextCreate(spriteData, width, height, 8, width * 4, <#CGColorSpaceRef  _Nullable space#>, <#uint32_t bitmapInfo#>)
 }
 
 + (Class)layerClass {
@@ -106,11 +119,10 @@
 
 - (void)setupFrameBuffer {
     GLuint buffer;
-    glGenBuffers(1, &buffer);
+    glGenFramebuffers(1, &buffer);
     self.myColorFrameBuffer = buffer;
-    glBindBuffer(GL_FRAMEBUFFER, self.myColorFrameBuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, self.myColorFrameBuffer);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, self.myColorRenderBuffer);
-    
 }
 
 // 创建渲染缓冲区 Render Buffer
@@ -155,7 +167,7 @@
 - (void)setupLayer {
     // 1.创建图层
     self.myEagLayer = (CAEAGLLayer *)self.layer;
-    // 2.
+    // 2.设置缩放因子 和屏幕相同
     [self setContentScaleFactor:[[UIScreen mainScreen]scale]];
 //    kEAGLDrawablePropertyRetainedBacking ： 绘图完成显示之后 是否保存该内容
 //    kEAGLDrawablePropertyColorFormat: 数据类型
