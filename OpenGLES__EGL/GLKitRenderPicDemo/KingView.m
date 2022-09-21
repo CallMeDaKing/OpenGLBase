@@ -141,6 +141,29 @@
     // 使用默认的方式绘制
     CGContextDrawImage(spriteContext, rect, spriteImage);
     
+    /*
+     因为iOS坐标远点在左上角 而纹理的远点位于左下角，所以会出现渲染出来的图层时上下颠倒的。
+     有6种解决方式 进行纹理翻转
+     1、 直接修改顶点数据中的顶点对应的纹理坐标y值，在数据源的阶段的时候将纹理和顶点坐标对应，从而实现正常显示
+     2、 修改shaderf中纹理坐标的y值 使用（1 - y） （但是会被调用多次， 不推荐）
+     3、 修改shaderV中 纹理坐标的y值 这个和2 本质相同 无非修改位置不一样而已
+     4、 修改shaderv中的坐标，本质上和修改纹理坐标相同 将Y 坐标进行翻转
+        varyTextCoord = textCoordinate;
+        vec4 vPos  = position;
+        vPos *= vec4(1, -1, 1, 1);
+        gl_Position = vPos;
+     
+     5、 使用矩阵翻转，在link完progrom 后 获取shaderf的矩阵属性使用 glUniformMatrix4fv给shader的矩阵赋值 实现翻转
+     6、 在图片加载纹理方法中  该方法常用 实现翻转
+     CGContextTranslateCTM(spriteContext, 0, rect.size.height);//向x,平移0,向y平移rect.size.height
+     CGContextScaleCTM(spriteContext, 1.0, -1.0); //x,缩放1.0，y,缩放-1.0
+     */
+    // 翻转纹理
+    CGContextTranslateCTM(spriteContext, 0, rect.size.height);
+    CGContextScaleCTM(spriteContext, 1.0, -1.0);
+    CGContextDrawImage(spriteContext, rect, spriteImage);
+
+    
     // 绘制完毕释放上下文
     CGContextRelease(spriteContext);
     
