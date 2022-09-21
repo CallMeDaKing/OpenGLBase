@@ -6,6 +6,7 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "KingView.h"
 
 @interface CubeViewController : UIViewController
 

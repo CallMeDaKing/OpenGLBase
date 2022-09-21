@@ -25,4 +25,9 @@
  需要使用varying
  3、 varying
  将attribute传递进来的纹理坐标通过varying属性 桥接到片元着色器。 在片元着色器需要声明一个完全相同的该修饰属性的变量，用于接受改属性的值
+ 
+ 4. shaderf 中 //precisition highp float; 属性打开会导致无法绘制吗，目前还未知具体原因
+ https://stackoverflow.com/questions/31997762/gpuimage-shader-crashing-with-error-one-or-more-attached-shaders-not-successfu
  */
+
+

@@ -39,21 +39,29 @@
     [self deleteRenderAndFrameBuffer];
     [self createRenderBuffer];
     [self setupFrameBuffer];
+    [self renderLayer];
 }
 
 - (void)renderLayer {
-    glClearColor(0.3, 0.45, 0.5, 1);
+    //设置清屏颜色
+    glClearColor(0.3f, 0.45f, 0.5f, 1.0f);
+    //清除屏幕
     glClear(GL_COLOR_BUFFER_BIT);
     
-    CGFloat scale = [[UIScreen mainScreen] scale];
-    // 设置视口
-    glViewport(self.frame.origin.x * scale, self.frame.origin.y * scale, self.frame.size.width * scale, self.frame.size.height *scale);
-    // 读取片元着色器和顶点着色器
-    NSString *vertFile = [[NSBundle mainBundle] pathForResource:@"shaderv" ofType:@"vsh"];
-    NSString *fragFile = [[NSBundle mainBundle] pathForResource:@"shaderf" ofType:@"fsh"];
+    //1.设置视口大小
+    CGFloat scale = [[UIScreen mainScreen]scale];
+    glViewport(self.frame.origin.x * scale, self.frame.origin.y * scale, self.frame.size.width * scale, self.frame.size.height * scale);
+    
+    //2.读取顶点着色程序、片元着色程序
+    
+    NSString *vertFile = [[NSBundle mainBundle]pathForResource:@"shaderv" ofType:@"vsh"];
+    NSString *fragFile = [[NSBundle mainBundle]pathForResource:@"shaderf" ofType:@"fsh"];
+    
+    NSLog(@"vertFile:%@",vertFile);
+    NSLog(@"fragFile:%@",fragFile);
     
     // 拿到program
-    self.myPrograme = [self loaderShader:vertFile frag:fragFile];
+    self.myPrograme = [self loadShaders:vertFile Withfrag:fragFile];
     
     // 链接program
     glLinkProgram(self.myPrograme);
@@ -67,13 +75,20 @@
         NSString *messageStr = [NSString stringWithUTF8String:meesage];
         NSLog(@"program link error %@", messageStr);
     }
-    
+    NSLog(@"program link success!");
+
     // link成功 使用program
     glUseProgram(self.myPrograme);
     
     // 准备顶点数据 2 个三角形 6个顶点（取决于顶点装配方式）
     GLfloat attrArr[] = {
+        0.5f, -0.5f, -1.0f,     1.0f, 0.0f,
+        -0.5f, 0.5f, -1.0f,     0.0f, 1.0f,
+        -0.5f, -0.5f, -1.0f,    0.0f, 0.0f,
         
+        0.5f, 0.5f, -1.0f,      1.0f, 1.0f,
+        -0.5f, 0.5f, -1.0f,     0.0f, 1.0f,
+        0.5f, -0.5f, -1.0f,     1.0f, 0.0f,
     };
     
     // 把顶点数据copy到 GPU
@@ -85,24 +100,33 @@
     // 开启顶点和纹理 数据开关 打开通道 首先获取通道id
     GLuint posoition = glGetAttribLocation(self.myPrograme, "position");
     glEnableVertexAttribArray(posoition);
-    glVertexAttribPointer(posoition, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 5, 0);
+    glVertexAttribPointer(posoition, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 5, NULL);
     
     GLuint texture = glGetAttribLocation(self.myPrograme, "textCoordinate");
     glEnableVertexAttribArray(texture);
-    glVertexAttribPointer(texture, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 5,  NULL + 3);
+    glVertexAttribPointer(texture, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 5,  (float *)NULL + 3);
     
     // 加载纹理
+    [self setupTexture:@"sun"];
     
+    // 设置纹理采样器
+    glUniform1i(glGetUniformLocation(self.myPrograme, "colorMap"), 0);
+    
+    // 绘制
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    
+    // 从渲染缓存区显示到屏幕上
+    [self.myContext presentRenderbuffer:GL_RENDERBUFFER];
 }
 
 // 纹理解压缩
-- (void)setupTexture:(NSString *)fileName {
-    // 1 纹理解压缩 OpenGL ES
+- (GLuint)setupTexture:(NSString *)fileName {
+    // 1 纹理解压缩: 就是使用 CoreGraphics 重绘一下
     CGImageRef spriteImage = [UIImage imageNamed:fileName].CGImage;
     
     if (!spriteImage) {
         NSLog(@"Faile to Load image~");
-        return;  // exit(1)
+        return 0;  // exit(1)
     }
     
     // 2 创建上下文
@@ -110,7 +134,34 @@
     size_t height = CGImageGetHeight(spriteImage);
     GLubyte *spriteData = (GLubyte *)calloc(width * height * 4, sizeof(GLubyte));
     
-    CGContextRef spriteContext = CGBitmapContextCreate(spriteData, width, height, 8, width * 4, <#CGColorSpaceRef  _Nullable space#>, <#uint32_t bitmapInfo#>)
+    CGContextRef spriteContext = CGBitmapContextCreate(spriteData, width, height, 8, width * 4, CGImageGetColorSpace(spriteImage), kCGImageAlphaPremultipliedLast);
+    
+    CGRect rect = CGRectMake(0, 0, width, height);
+    
+    // 使用默认的方式绘制
+    CGContextDrawImage(spriteContext, rect, spriteImage);
+    
+    // 绘制完毕释放上下文
+    CGContextRelease(spriteContext);
+    
+    // 绑定纹理到默认纹理id  如果只有一个纹理的时候 纹理id为0 可以省略glGenBuffers 该方法
+    
+    glBindTexture(GL_TEXTURE_2D, 0);
+    
+    // 设置纹理属性
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    
+    float fw = width, fh = height;
+    
+    // 载入纹理
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, fw, fh, 0, GL_RGBA, GL_UNSIGNED_BYTE, spriteData);
+    
+    // 释放 spriteData
+    free(spriteData);
+    return 0;
 }
 
 + (Class)layerClass {
@@ -175,37 +226,53 @@
     self.myEagLayer.drawableProperties = @{kEAGLDrawablePropertyRetainedBacking : @(NO),kEAGLDrawablePropertyColorFormat : kEAGLColorFormatRGBA8};
 }
 
-#pragma mark -- shader
-- (GLuint)loaderShader:(NSString *)vert frag:(NSString *)frag {
-    
-    // 1. 定义顶点着色器 、 片元着色器对象
+#pragma mark --shader
+//加载shader
+-(GLuint)loadShaders:(NSString *)vert Withfrag:(NSString *)frag
+{
+    //1.定义2个零时着色器对象
     GLuint verShader, fragShader;
-    // 2. program对象
-    GLuint program = glCreateProgram();
-    // 3. 编译顶点、片元着色器
+    //创建program
+    GLint program = glCreateProgram();
+    
+    //2.编译顶点着色程序、片元着色器程序
+    //参数1：编译完存储的底层地址
+    //参数2：编译的类型，GL_VERTEX_SHADER（顶点）、GL_FRAGMENT_SHADER(片元)
+    //参数3：文件路径
     [self compileShader:&verShader type:GL_VERTEX_SHADER file:vert];
     [self compileShader:&fragShader type:GL_FRAGMENT_SHADER file:frag];
-    // 4.编译好的program shader附着到program
+    
+    //3.创建最终的程序
     glAttachShader(program, verShader);
     glAttachShader(program, fragShader);
-    // 5. 将shader对象删除
+    
+    //4.释放不需要的shader
     glDeleteShader(verShader);
     glDeleteShader(fragShader);
     
     return program;
 }
 
+//编译shader
 - (void)compileShader:(GLuint *)shader type:(GLenum)type file:(NSString *)file{
-    // 1. 读取文件路径
-    NSString *content = [NSString stringWithContentsOfFile:file encoding:NSUTF8StringEncoding error:nil];
-    // 转成C字符串
-    const GLchar *source = [content UTF8String];
-    // 2.创建对应类型shader
-    *shader = glCreateShader(type);
-    // 3.将着色器代码读取并附着到着色器上
-    glShaderSource(*shader, 1, &source, NULL);
-    // 4.编译
-    glCompileShader(*shader);
-}
+    
+    //1.读取文件路径字符串
+    NSString* content = [NSString stringWithContentsOfFile:file encoding:NSUTF8StringEncoding error:nil];
+    const GLchar* source = (GLchar *)[content UTF8String];
 
+    //2.创建一个shader（根据type类型）
+    *shader = glCreateShader(type);
+    
+    //3.将着色器源码附加到着色器对象上。
+    //参数1：shader,要编译的着色器对象 *shader
+    //参数2：numOfStrings,传递的源码字符串数量 1个
+    //参数3：strings,着色器程序的源码（真正的着色器程序源码）
+    //参数4：lenOfStrings,长度，具有每个字符串长度的数组，或NULL，这意味着字符串是NULL终止的
+    glShaderSource(*shader, 1, &source,NULL);
+    
+    //4.把着色器源代码编译成目标代码
+    glCompileShader(*shader);
+    
+    
+}
 @end
