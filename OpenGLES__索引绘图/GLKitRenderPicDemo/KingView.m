@@ -6,6 +6,8 @@
 //
 
 #import "KingView.h"
+#import "GLESMath.h"
+#import "GLESUtils.h"
 #import <OpenGLES/ES2/gl.h>
 
 /*
@@ -61,15 +63,15 @@
     CGFloat scale = [UIScreen mainScreen].scale;
     glViewport(self.frame.origin.x * scale, self.frame.origin.y * scale, self.frame.size.width * scale, self.frame.size.height * scale);
     // 加载和编译着色器 创建program 对象绑定着色器
-    NSString *vertFile = [[NSBundle mainBundle] pathForResource:@"shaderv" ofType:@"glsl"];
-    NSString *fragFile = [[NSBundle mainBundle] pathForResource:@"shaderf" ofType:@"glsl"];
+    NSString *vertFile = [[NSBundle mainBundle] pathForResource:@"shaderv" ofType:@"vsh"];
+    NSString *fragFile = [[NSBundle mainBundle] pathForResource:@"shaderf" ofType:@"fsh"];
     
     if (self.myPrograme) {
         glDeleteProgram(self.myPrograme);
         self.myPrograme = 0;
     }
     self.myPrograme = [self loadShaders:vertFile frag:fragFile];
-    // 链接program
+    // 链接progr恩平-【【【【【【【【【【【am
     glLinkProgram(self.myPrograme);
     
     // 获取链接状态
@@ -117,7 +119,62 @@
     // 将顶点数据从CPU copy到GPU
     glBufferData(GL_ARRAY_BUFFER, sizeof(attrArr), attrArr, GL_DYNAMIC_DRAW);
     
+    // 将顶点数据通过myProgram 传递到着色器程序的positon
+    /*
+        glGetAttribLocation() 用来获取vertex attribute 入口
+        数据通过 glVertexAttribPointer 方法传递
+        //注意 第二个参数 需要和shaderv中 的属性名position 保持一致 否则读取不到
+     */
+    GLuint position = glGetAttribLocation(self.myPrograme, "position");
+    // 开启顶点数据读取的开关
+    glEnableVertexAttribArray(position);
+    // 设置顶点数据读取方式
+    glVertexAttribPointer(position, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 6, NULL);
+
+    // 处理顶点颜色数据
+    GLuint positionColor = glGetAttribLocation(self.myPrograme, "positionColor");
+    glEnableVertexAttribArray(positionColor);
+    glVertexAttribPointer(positionColor, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 6, (float *)NULL + 3);
     
+    
+    // 获取 projectionMatrix 和 modelViewMatrix 索引
+    GLuint projectionMatrixSlot = glGetUniformLocation(self.myPrograme, "projectionMatrix");
+    GLuint modelViewMatrixSlot = glGetUniformLocation(self.myPrograme, "modelViewMatrix");
+    
+    float width = self.frame.size.width;
+    float height = self.frame.size.height;
+    
+    // 创建44 矩阵
+    KSMatrix4 projectionMatrix;
+    ksMatrixLoadIdentity(&projectionMatrix);
+    
+    float aspect = width / height;  // 宽高比
+    ksPerspective(&projectionMatrix, 30, aspect, 5.0f, 20.0f);
+    // 将投影矩阵传递到顶点着色器 设置读取方式
+    glUniformMatrix4fv(projectionMatrixSlot, 1, GL_FALSE, (GLfloat *)&projectionMatrix.m[0][0]);
+    
+    // 创建模型视图矩阵
+    KSMatrix4 modelViewMatrix;
+    ksMatrixLoadIdentity(&modelViewMatrix);
+    ksTranslate(&modelViewMatrix, 0.0, 0.0, -10.0);
+    
+    // 创建旋转矩阵
+    KSMatrix4 rotateMatrix;
+    ksMatrixLoadIdentity(&rotateMatrix);
+    ksRotate(&rotateMatrix, xDegree, 1.0, 0.0, 0.0);
+    ksRotate(&rotateMatrix, yDegree, 0.0, 1.0, 0.0);
+    ksRotate(&rotateMatrix, zDegree, 0.0, 0.0, 1.0);
+    // 将模型视图矩阵和旋转矩阵相乘
+    ksMatrixMultiply(&modelViewMatrix, &rotateMatrix, &modelViewMatrix);
+    
+    glUniformMatrix4fv(modelViewMatrixSlot, 1, GL_FALSE, (GLfloat *)&modelViewMatrix.m[0][0]);
+    
+    glEnable(GL_CULL_FACE);
+    
+    // 使用索引绘图
+    glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(indices[0]), GL_UNSIGNED_INT, indices);
+
+    [self.myContext presentRenderbuffer:GL_RENDERBUFFER];
 }
  
 - (GLuint)loadShaders:(NSString *)vertFile frag:(NSString *)fragFile {

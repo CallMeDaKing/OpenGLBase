@@ -1,8 +1,12 @@
 attribute vec4 position;
-attribute vec2 textCoordinate;
-varying lowp vec2 varyTexCoord;      
- 
+attribute vec4 positionColor;
+
+uniform mat4 projectionMatrix;
+uniform mat4 modelViewMatrix;
+varying lowp vec4 varyColor;
+
 void main() {
-    varyTexCoord = textCoordinate;
-    gl_Position = position;
+    varyColor = positionColor;
+    
+    gl_Position = projectionMatrix * modelViewMatrix * position;;
 }

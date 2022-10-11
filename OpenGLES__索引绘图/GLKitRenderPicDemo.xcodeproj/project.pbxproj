@@ -21,6 +21,8 @@
 		FA76E23528C72B580034D565 /* GLKitRenderPicDemoTests.m in Sources */ = {isa = PBXBuildFile; fileRef = FA76E23428C72B580034D565 /* GLKitRenderPicDemoTests.m */; };
 		FA76E23F28C72B580034D565 /* GLKitRenderPicDemoUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = FA76E23E28C72B580034D565 /* GLKitRenderPicDemoUITests.m */; };
 		FA76E24128C72B580034D565 /* GLKitRenderPicDemoUITestsLaunchTests.m in Sources */ = {isa = PBXBuildFile; fileRef = FA76E24028C72B580034D565 /* GLKitRenderPicDemoUITestsLaunchTests.m */; };
+		FADFC8FD28F40ED100A4CFA4 /* GLESMath.c in Sources */ = {isa = PBXBuildFile; fileRef = FADFC8F828F40ED100A4CFA4 /* GLESMath.c */; };
+		FADFC8FE28F40ED100A4CFA4 /* GLESUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = FADFC8FB28F40ED100A4CFA4 /* GLESUtils.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -63,6 +65,12 @@
 		FA76E23A28C72B580034D565 /* GLKitRenderPicDemoUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GLKitRenderPicDemoUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		FA76E23E28C72B580034D565 /* GLKitRenderPicDemoUITests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GLKitRenderPicDemoUITests.m; sourceTree = "<group>"; };
 		FA76E24028C72B580034D565 /* GLKitRenderPicDemoUITestsLaunchTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GLKitRenderPicDemoUITestsLaunchTests.m; sourceTree = "<group>"; };
+		FADFC8F728F40ED100A4CFA4 /* Quaternion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Quaternion.h; path = Utils/Quaternion.h; sourceTree = SOURCE_ROOT; };
+		FADFC8F828F40ED100A4CFA4 /* GLESMath.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = GLESMath.c; path = Utils/GLESMath.c; sourceTree = SOURCE_ROOT; };
+		FADFC8F928F40ED100A4CFA4 /* GLESMath.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GLESMath.h; path = Utils/GLESMath.h; sourceTree = SOURCE_ROOT; };
+		FADFC8FA28F40ED100A4CFA4 /* GLESUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GLESUtils.h; path = Utils/GLESUtils.h; sourceTree = SOURCE_ROOT; };
+		FADFC8FB28F40ED100A4CFA4 /* GLESUtils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = GLESUtils.m; path = Utils/GLESUtils.m; sourceTree = SOURCE_ROOT; };
+		FADFC8FC28F40ED100A4CFA4 /* Vector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Vector.h; path = Utils/Vector.h; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -93,6 +101,7 @@
 		FA76E20C28C72B540034D565 = {
 			isa = PBXGroup;
 			children = (
+				FADFC8F628F40EBB00A4CFA4 /* Utilss */,
 				FA1E044C28D1B104007D78AA /* note.c */,
 				FA76E21728C72B540034D565 /* GLKitRenderPicDemo */,
 				FA76E23328C72B580034D565 /* GLKitRenderPicDemoTests */,
@@ -148,6 +157,19 @@
 				FA76E24028C72B580034D565 /* GLKitRenderPicDemoUITestsLaunchTests.m */,
 			);
 			path = GLKitRenderPicDemoUITests;
+			sourceTree = "<group>";
+		};
+		FADFC8F628F40EBB00A4CFA4 /* Utilss */ = {
+			isa = PBXGroup;
+			children = (
+				FADFC8F828F40ED100A4CFA4 /* GLESMath.c */,
+				FADFC8F928F40ED100A4CFA4 /* GLESMath.h */,
+				FADFC8FA28F40ED100A4CFA4 /* GLESUtils.h */,
+				FADFC8FB28F40ED100A4CFA4 /* GLESUtils.m */,
+				FADFC8F728F40ED100A4CFA4 /* Quaternion.h */,
+				FADFC8FC28F40ED100A4CFA4 /* Vector.h */,
+			);
+			path = Utilss;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -284,6 +306,8 @@
 			files = (
 				FA1E044D28D1B104007D78AA /* note.c in Sources */,
 				FA1E045228D1CE88007D78AA /* KingView.m in Sources */,
+				FADFC8FE28F40ED100A4CFA4 /* GLESUtils.m in Sources */,
+				FADFC8FD28F40ED100A4CFA4 /* GLESMath.c in Sources */,
 				FA76E22028C72B540034D565 /* CubeViewController.m in Sources */,
 				FA76E21A28C72B540034D565 /* AppDelegate.m in Sources */,
 				FA76E22B28C72B570034D565 /* main.m in Sources */,

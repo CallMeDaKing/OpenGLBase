@@ -215,8 +215,8 @@
 - (void)deleteRenderAndFrameBuffer {
     // 1 Frame Buffer Object  FBO
     // 2 Render Buffer 可以分为三个类别 颜色缓冲区 深度缓冲区 魔板缓冲区
-    glDeleteRenderbuffers(1, &_myColorFrameBuffer);
-    self.myColorFrameBuffer = 0;
+    glDeleteRenderbuffers(1, &_myColorRenderBuffer);
+    self.myColorRenderBuffer = 0;
     
     glDeleteFramebuffers(1, &_myColorFrameBuffer);
     self.myColorFrameBuffer = 0;
