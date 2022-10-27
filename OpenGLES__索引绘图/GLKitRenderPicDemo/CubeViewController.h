@@ -6,9 +6,9 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "KingView.h"
+#import <GLKit/GLKit.h>
 
-@interface CubeViewController : UIViewController
+@interface CubeViewController : GLKViewController
 
 
 @end
